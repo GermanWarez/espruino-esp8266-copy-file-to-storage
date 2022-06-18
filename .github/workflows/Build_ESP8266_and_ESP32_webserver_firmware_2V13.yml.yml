@@ -1,0 +1,105 @@
+# Build ESP8266 and ESP32 web-server firmware - RELEASE_2V13
+# Changes from official release:
+# - OTA is removed, it's not supported anyway
+# - The modules Graphics and Crypto are removed
+# - The modules FlashFS and Storage are added
+
+name: Build RELEASE_2V13 Espruino custom firmware
+
+# Only manual execution, no CI
+on:
+  workflow_dispatch:
+
+jobs:
+  build_main:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board: [ESP32, ESP8266_4MB]
+      # try and build for all devices even if one fails
+      fail-fast: false 
+      
+    steps:
+    - name: Checkout espruino/Espruino
+      uses: actions/checkout@master
+      with:
+        ref: RELEASE_2V13
+        repository: espruino/Espruino
+        fetch-depth: 0
+        
+    - name: Remove OTA
+      run: |
+        sed "s/USE_ESP8266=1/USE_ESP8266=1\nNO_FOTA=1/g" -i ./Makefile
+        sed "s/USE_ESP32=1/USE_ESP32=1\nNO_FOTA=1/g" -i ./Makefile
+
+    - name: Upload Makefile
+      uses: actions/upload-artifact@v3
+      with:
+        name: Makefile_${{ matrix.board }}
+        path: ./Makefile
+
+    - name: Optimize for web server
+      run: |
+        sed "s/'GRAPHICS'/#'GRAPHICS'/g" -i ./boards/ESP8266_4MB.py
+        sed "s/#'FILESYSTEM'/'FILESYSTEM'/g" -i ./boards/ESP8266_4MB.py
+        sed "s/#'FLASHFS'/'FLASHFS'/g" -i ./boards/ESP8266_4MB.py
+        #sed "s/'variables'\s*: 1600,/'variables': 1000,/g" -i ./boards/ESP8266_4MB.py # Filesystem won't work at all :-?
+        sed "s/'GRAPHICS'/#'GRAPHICS'/g" -i ./boards/ESP32.py
+        sed "s/'BLUETOOTH'/#'BLUETOOTH'/g" -i ./boards/ESP32.py
+        
+    - name: Upload ${{ matrix.board }}.py
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.board }} .py
+        path: ./boards/${{ matrix.board }}.py
+
+    - name: Make ${{ matrix.board }}
+      env:
+        TRAVIS: 1
+        RELEASE: 1
+        BOARD: ${{ matrix.board }} 
+      run: |
+        source ./scripts/provision.sh  ${{ matrix.board }}
+        make
+      
+    - name: Upload binary ${{ matrix.board }} (artifact)
+      uses: actions/upload-artifact@v3
+      with:
+        name: Espruino_${{ matrix.board }}_latest
+        retention-days: 1
+        path: |
+          ./espruino_*.bin
+          ./ESP8266_NONOS_SDK-2.2.1/bin/blank.bin
+          ./ESP8266_NONOS_SDK-2.2.1/bin/boot_v1.6.bin
+          ./ESP8266_NONOS_SDK-2.2.1/bin/esp_init_data_default.bin
+          ./app/build/bootloader/bootloader.bin
+
+  release:
+    runs-on: ubuntu-latest
+    name: Release binaries
+    needs: build_main
+    steps:
+    - name: Downloads binaries (artifact)
+      uses: actions/download-artifact@v2
+
+    - name: LS release
+      run: |
+        mv ./Espruino_ESP8266_4MB_latest/*.bin .
+        mv ./Espruino_ESP8266_4MB_latest/ESP8266_NONOS_SDK-2.2.1/bin/blank.bin ./ESP8266_blank.bin
+        mv ./Espruino_ESP8266_4MB_latest/ESP8266_NONOS_SDK-2.2.1/bin/boot_v1.6.bin ./ESP8266_boot_v1.6.bin
+        mv ./Espruino_ESP8266_4MB_latest/ESP8266_NONOS_SDK-2.2.1/bin/esp_init_data_default.bin ./ESP8266_esp_init_data_default.bin
+        mv ./Espruino_ESP32_latest/*.bin .
+        mv ./Espruino_ESP32_latest/app/build/bootloader/bootloader.bin ./ESP32_bootloader.bin
+    
+    - name: Publish release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        title: "RELEASE_2V13"
+        automatic_release_tag: "RELEASE_2V13"
+        prerelease: false
+        files: |
+          ./*.bin
+
+    
+    

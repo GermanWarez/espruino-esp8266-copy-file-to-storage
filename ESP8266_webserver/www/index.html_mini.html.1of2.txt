@@ -1,0 +1,43 @@
+// Execute this JavaScript code on Espruino
+// to write '/index.html' to flash.
+
+var fname       = '/index.html';
+var fsize       = 881;
+var chunkIndex  = 0;
+var chunkSize   = 128;
+
+// helper function to convert a hex buffer to a string
+var hex2str = function(hex) {
+  var str = '';
+  for (hex_index=0; hex_index<hex.length; hex_index += 2) {
+    str += String.fromCharCode(parseInt(hex.substr(hex_index, 2), 16));
+  }
+  return str;
+}
+
+// Write the file to the flash
+
+require('Storage').erase(fname);
+require('Storage').write(fname, 0, 0, fsize);
+require('Storage').write(fname, hex2str('1f8b080000000000020acd56db6edb3810fd95a95e2421a95c67d1a2b02303bd1868d1140d50bf144511d0d2d8624c935a92caae10f8df3ba46859ae9b7417bb0f0502471acee59ce11c52974fde7e7ab3f8723d87ca6ec5ecd2fd8260729d4728a3195c56c84afa670acd6b3b1b8de033fed9a0b49c919f6225a8153021a066'), chunkIndex, fsize);
+chunkIndex = chunkIndex + chunkSize;
+require('Storage').write(fname, hex2str('6b04660c5a03e4b5a8b801fa93882596b06c616e6add70a9ce815910c88c052561fef9fae5c58b17131773cd3465420156336956a80d149a990a6c8560acd2ae846996a63516b719dc311d2a2ed41541c9bfdec728704be8de97f124be78fee1f5cdad89cf2176b4e209c48107f0328f6ec27a04461779b491aad8a8c63efd23'), chunkIndex, fsize);
+chunkIndex = chunkIndex + chunkSize;
+require('Storage').write(fname, hex2str('7b9e8d33b2cf2e478176bc3b3f4e5d98e3b482cb4d97945622a834aef2682958b1c9bc41a3c823635b81a642b411d8b6c63cb2f8b71d3987d16909be5d3f1b1f15214b57c32f05d8fe39bbadd70e2ebd9c26da72c91f6b43580ff96ed91deb567f6cc1b7e949b71d8b413788b5cbee188d7af21e4f70ec72395faae55d6fcde8'), chunkIndex, fsize);
+chunkIndex = chunkIndex + chunkSize;
+require('Storage').write(fname, hex2str('a4f1bf8c38c238f426fe43d7be37ce68995ea39d1f1a4380595db7371b6e2d4acfaf9f28471075be6a6461b992497a2fd0764bf9b00999a9f8ca26e914f80a128742ad12ef90e679dcc812575c6219a7f785924609cc845a27b10be572bdd74ba1b635e5c72c4ea73b14068fbd5f9507673f3810c570d6bd67fefd0c621a29e5'), chunkIndex, fsize);
+chunkIndex = chunkIndex + chunkSize;
+require('Storage').write(fname, hex2str('8552aaa271145d325295c3dd4f437e1c73d3a7d9d31128d7b69a82f98bdba24a0eee44801904bfd513dfa79034efeb151a99c5d0e02476927010825fc64c2b8bdcea060f3625dd11920f5a7e58f31aea00b8c7c3c289967a04eeacca684f51966f2a2eca2484108a2581db4ca1231186ea9ff108ceff8189d35547849ea6ff1e'), chunkIndex, fsize);
+chunkIndex = chunkIndex + chunkSize;
+require('Storage').write(fname, hex2str('ae9bea07b01e26fa75fbbedcefd7f1a4ff7fc8032a1a6ad6083ba1731f357568aeb5d213583c349991bf0894a5b3bbae95b64e0fd39d13ccc191d4e2462bbd1f9f8d3b09ec76bb1fe47831d46337d9bf832207947ba1f58af4f769a14a9f091edfb73e3acdb894a8df2d3e5eed154069681c7e8201ef280404a72b91425cc907'), chunkIndex, fsize);
+chunkIndex = chunkIndex + chunkSize;
+require('Storage').write(fname, hex2str('f13c0a6170180c81b0b29cbb0a57a14012b96989ce87fb422dda4da1bf29e8297c342c55d94298af781090a4b1fbb218cfdea1100a3ef80398a2c664dd5f72c3b339a249b379f40abc113a63e62fa79a495748cf92228556351a24db2254a891703800e4e53f6dbe03bf5503f1ea080000'), chunkIndex, fsize);
+
+console.log('File ' + fname + ' written to storage.');
+require('Storage').read(fname).length;
+
+//
+// Here you might take a break and check if all writes returned true.
+// And then do a hard reset to the device, i.e. reset button or power cycle.
+//
+

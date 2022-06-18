@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      // Sequential load of all page assets
+      // This is needed by Espruino, at least on ESP8266:
+      // Parallel transfers crash the storage subsystem.
+      var assetsToLoad = [
+        {'type':'css',    'href': '/css/black.css'},
+        {'type':'script', 'src':  '/js/knockout-3.5.1.js'},  
+        {'type':'script', 'src':  '/js/javascript.js'},
+        {'type':'img',    'src':  '/img01.jpg', 'targetElementId': 'happy_kitten'}
+      ];
+      var assetLoader = function() {
+        let asset = assetsToLoad.shift();
+        if (typeof(asset) == 'undefined') {
+          console.log('Loading assets complete.');
+        } else {     
+          console.log('Adding asset type "' + asset.type + '" to the document.');
+          //let elementId = asset.type + '_' + assetsToLoad.length;
+          switch(asset.type) {
+            case 'css':
+              var element = document.createElement('link');
+              element.async = true;
+              element.onload = assetLoader;
+              element.href = asset.href;
+              element.rel = "stylesheet"
+              document.head.appendChild(element);
+              break;
+            case 'script':
+              var element = document.createElement('script');
+              element.async = true;
+              element.onload = assetLoader;
+              element.src = asset.src;
+              document.head.appendChild(element);
+              break;
+            case 'img':
+              var element = document.getElementById(asset.targetElementId);
+              element.async = true;
+              element.onload = assetLoader;
+              element.src = asset.src;
+              break;
+            default:
+              alert('Error: Type "' + asset.type + '"" is not supported');
+          }
+        }
+      };
+    </script>
+  </head>
+  <body onload='assetLoader()'>
+    <h1>Hello Kitten</h1>
+    <img id="happy_kitten" alt="A happy kitten."></span>
+    <br>
+    (c) your name here
+  </body>
+</html>

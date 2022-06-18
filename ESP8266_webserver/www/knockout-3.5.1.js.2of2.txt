@@ -1,0 +1,82 @@
+// If you didn't reset the device, do it now before proceeding.
+
+// This code will copy the file from flash to storage
+// It might seem totally stupid, but writing directly to storage always failed on my device.
+
+var fname       = '/js/knockout-3.5.1.js';
+var fsize       = 25072;
+var chunkIndex  = 0;
+var chunkSize   = 1000;
+
+var createFilesystem = function() {
+  // format the flash filesystem (if it's not there)
+  // https://www.espruino.com/Reference#t_l_E_flashFatFS
+  try {
+    require('fs').readdirSync();
+    console.log('Filesystem detected, ok.');
+  } catch (e) {
+    console.log('Filesystem not detected, formatting.');
+    E.flashFatFS({ format: true });
+    console.log('Filesystem Ok.');
+  }
+};
+
+var createFolders = function() {
+  // create the path (it'll throw an error if it's already)
+  var folderNames = fname.split("/")
+  var currentFolderName = "/";
+  for (i=0; i<folderNames.length-1; i++) {
+    currentFolderName = currentFolderName + folderNames[i]
+    if (currentFolderName === "/") {
+      continue;
+    }
+    try {
+      require("fs").mkdirSync(currentFolderName);
+      console.log("Folder " + currentFolderName + " created");
+    } catch (e) {
+      console.log("Folder " + currentFolderName + " could not be created");
+      console.log(e);
+    }
+  }
+};
+
+var deleteExistingFile = function() {
+  require("fs").unlinkSync(fname);
+};
+
+// Copy chunk by chunk
+var copy = function() {
+  data = require("Storage").read(fname, chunkIndex, chunkSize)
+  r = require("fs").appendFileSync(fname, data)
+  if (r == false) {
+    clearInterval(copyInterval);
+    console.log('Failed to write to Storage. Reset the device to fix it.');
+  } else {
+    console.log('Written chunk ' + chunkIndex);
+  }
+  chunkIndex = chunkIndex + chunkSize;
+  
+  if (chunkIndex > fsize) {
+    clearInterval(copyInterval);
+    console.log('Done');
+  }
+};
+
+var callback = function() {
+  // show the written file
+  var folderNames = fname.split("/");
+  var currentFolderName = "/";
+  for (i=0; i<folderNames.length-1; i++) {
+    currentFolderName = currentFolderName + folderNames[i];
+    console.log('>require("fs").readdirSync(' + currentFolderName + ')');
+    console.log(require("fs").readdirSync(currentFolderName));
+  }
+  console.log('Copy file done.')
+};
+
+createFilesystem();
+createFolders();
+deleteExistingFile();
+console.log('Copy file starts')
+var copyInterval = setInterval(copy, 100);
+

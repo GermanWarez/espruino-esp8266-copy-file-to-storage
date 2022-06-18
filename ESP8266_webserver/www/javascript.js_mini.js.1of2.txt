@@ -1,0 +1,31 @@
+// Execute this JavaScript code on Espruino
+// to write '/js/javascript.js' to flash.
+
+var fname       = '/js/javascript.js';
+var fsize       = 54;
+var chunkIndex  = 0;
+var chunkSize   = 128;
+
+// helper function to convert a hex buffer to a string
+var hex2str = function(hex) {
+  var str = '';
+  for (hex_index=0; hex_index<hex.length; hex_index += 2) {
+    str += String.fromCharCode(parseInt(hex.substr(hex_index, 2), 16));
+  }
+  return str;
+}
+
+// Write the file to the flash
+
+require('Storage').erase(fname);
+require('Storage').write(fname, 0, 0, fsize);
+require('Storage').write(fname, hex2str('1f8b080000000000020a2b4b2c5248cbcfb74d2bcd4b2ec9cccfd3c8d7ac2e4a2d292dca53020a2b69e7d75a03007332ab6823000000'), chunkIndex, fsize);
+
+console.log('File ' + fname + ' written to storage.');
+require('Storage').read(fname).length;
+
+//
+// Here you might take a break and check if all writes returned true.
+// And then do a hard reset to the device, i.e. reset button or power cycle.
+//
+
