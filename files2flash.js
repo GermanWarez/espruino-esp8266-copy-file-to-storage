@@ -1,24 +1,40 @@
 const usage = `
 Usage:
-node.exe files2flash.js <filename> <target_filename>
+node.exe filesflash.js <filename> <target_filename>
 
-Intended use: Store static files for a web server on Espruino ESP8266 or ESP32.
-The program reads the file <filename> and writes the file <filename>1of2.txt
-<filename> and .2of.txt. These two files write the contents of file <filename>
-as <target_filename> to the flash storage of the device:
-Copy the contents of <filename>.1of2.txt into the terminal (default: left pane)
-of the Espruino IDE, and the code will be executed line-by-line. Don't copy it
-into the code editor, don't send and save it. Then reset the device, and repeat
-with <filename>.2of2.txt.
+Intended use: Store static files for a web server on Espruino ESP8266 or ESP32.            
+
+The program reads the file <filename> and writes the file <filename>.txt. The file <filename>.txt
+writes the file <filename> as <target_filename> to the flash storage of the device:
+Copy the contents of <filename>.txt into the terminal (default: left pane) of the Espruino IDE,
+and the code will be executed line-by-line. Don't copy it into the code editor, don't send and
+save it.
   <target_filename> must be not longer than 28 characters (including extension).
+  <target_filename> can start with a slash, and contain more slashes (e.g. /img/welcome.png)
+  <target_filename> containing the string '.boot' is not compressed with gzip (for .boot0, .bootcde etc.)
 
-html, css and js files are compressed with gzip.
+The program doesn't change the input file.
+
+Note: Minify the files as much as you can, as the Esprunio has very limted RAM and can't
+      serve the files in one chunk, but multiple small chuncks. Making page loads slower.
+       (for running a web server).
 
       Transfer the files via TCP/IP if possible. Or use a short and good RS232 cable, limit
-      the transfer speed and expect bit errors over RS232.
+      the transfer speed don't blame me for slow transfers with errors over RS232.
+
+Minification can reduce the file size by over 90%. Do this for every file, some Online-Tools:
+html: https://kangax.github.io/html-minifier/ or https://www.willpeavy.com/tools/minifier/
+js: https://www.toptal.com/developers/javascript-minifier
+css: https://www.cleancss.com/css-minify/
+jpeg: http://jpeg-optimizer.com/
+
+Disclaimer:
+Usage is forbidden for anyone without a working backup, restore and recovery solution.
+To fix every error just call 'Computer: Fix. Authorization: Master-1-3-3-7-Omega'.
 `;
 const chunkSize = 128;
 const fs = require('fs');
+const { exit } = require('process');
 const zlib = require('zlib');
 
 // check args
@@ -37,15 +53,18 @@ if (fnameTarget.length > 28) {
 }
 
 // helper
-const readAndZipFile = function(fnameIn) {
-  const fileExtension = fnameIn.split('.').pop();
-  console.log(fileExtension)
+const readAndZipFile = function(fnameIn, fnameTarget) {
+  var fileExtension = fnameIn.split('.').pop();
+  if (fnameTarget.indexOf('.boot') != -1 ) {
+    fileExtension = fileExtension + ' (do no compress boot code)';
+  }
+  console.log('fileExtension: ' + fileExtension);
   switch (fileExtension) {
     case 'html':
     case 'js':
     case 'css':
       const dataIn = fs.readFileSync(fnameIn, 'utf8' );
-      console.log('dataIn.length:' + dataIn.length);
+      console.log('dataIn.length: ' + dataIn.length);
       return zlib.gzipSync(Buffer.from(dataIn), {level: 9, memLevel: 9})
       break;
     default:
@@ -63,8 +82,8 @@ const appendToFile = function(fname, line) {
 }
 
 // read the zip file
-const dataOut = readAndZipFile(fnameIn);
-console.log('dataOut.length:' + dataOut.length);
+const dataOut = readAndZipFile(fnameIn, fnameTarget);
+console.log('dataOut.length: ' + dataOut.length);
 const fsize = dataOut.length; 
 
 // write the compressed data
@@ -116,6 +135,10 @@ require('Storage').read(fname).length;
 //
 `);
 
+if (fnameTarget.indexOf('.boot') != -1 ) {
+  console.log('Exit: Boot code goes to flash only, do not copy to filesystem. Skipping file 2of2.txt');
+  exit();
+}
 
 writeToFile(fnameOut2, `// If you didn't reset the device, do it now before proceeding.
 
@@ -200,65 +223,3 @@ console.log('Copy file starts')
 var copyInterval = setInterval(copy, 100);
 
 `);
-
-/*
-  
-  //kills the res variable
-  var sendData = function(res) {
-    console.log(chunkIndex, process.memory());
-    res.write(storage.read(url, chunkIndex, chunkSize));
-    chunkIndex = chunkIndex + chunkSize;
-    if (chunkIndex > filesize) {
-      clearInterval(sendDataInterval);
-    }
-  };
-  //var sendDataInterval = setInterval(sendData, 100);
-
-  // while true with sleep => memory==0
-  while (false) {
-    console.log(chunkIndex, process.memory());
-    console.log(E.getSizeOf(global,2));
-    res.write(storage.read(url, chunkIndex, chunkSize));
-    chunkIndex = chunkIndex + chunkSize;
-    if (chunkIndex > filesize) {
-      break;
-    }
-    if (process.memory().free < 500) {
-      sleep(3000);
-    }
-  }
-  */
-
-// Save to fs -> blocks after 10 tries
-/*
-appendToFile('// helper function to format the flash filesystem');
-appendToFile('// https://www.espruino.com/Reference#t_l_E_flashFatFS');
-appendToFile('try {');
-appendToFile('  require("fs").readdirSync();');
-appendToFile('} catch (e) {');
-appendToFile('  E.flashFatFS({ format: true });');
-appendToFile('}');
-appendToFile('');
-*/
- /*
- appendToFile('// create the path');
-appendToFile('var folderNames = fname.split("/")');
-appendToFile('var currentFolder = "/";');
-appendToFile('for (i=0; i<folderNames.length-1; i++) {');
-appendToFile('  currentFolder = currentFolder + folderNames[i]');
-appendToFile('  if (currentFolder === "/") {');
-appendToFile('    continue;');
-appendToFile('  }');
-appendToFile('  try {');
-appendToFile('    require("fs").mkdirSync(currentFolder);');
-appendToFile('    console.log("Folder " + currentFolder + " created");');
-appendToFile('  } catch (e) {');
-appendToFile('    console.log("Folder " + currentFolder + " could not be created");');
-appendToFile('    console.log(e);');
-appendToFile('  }');
-appendToFile('}');
-appendToFile('');
- */
-/*
-appendToFile('require("fs").appendFileSync(fname, hex2str("' +  hexData + '"));');
-*/
