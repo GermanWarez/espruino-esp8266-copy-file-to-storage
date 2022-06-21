@@ -1,7 +1,7 @@
 # Build ESP8266 and ESP32 web-server firmware
 # Changes from official release:
 # - OTA is removed, it's not supported anyway
-# - The modules Graphics and Crypto are removed
+# - The module Graphics is removed
 # - The modules FlashFS and Storage are added
 
 name: Build latest Espruino custom firmware
