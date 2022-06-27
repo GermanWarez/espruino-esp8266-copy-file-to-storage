@@ -1,5 +1,5 @@
 ## espruino/esp8266/copy-file-to-storage
-Here's a JaveScript 'files2flash.js' to help storing large files on any microcontroller running Esprunio. It uses gzip compression for html, js and css files. All other file types aren't compressed. The Espruino IDE can transfer files to Storage, but wouldn't work for large files.
+Here's a JavaScript 'files2flash.js' to help storing large files on any microcontroller running Esprunio. It uses gzip compression for html, js and css files. All other file types aren't compressed. The Espruino IDE can transfer files to Storage, but wouldn't work for large files.
 
 ### Description
 The script was developed to serving of large, static files with a web server on an ESP8266-12F (4MB flash) running Espruino. The offical firmware releases for ESP8266 don't include the __Filesystem__ module. This module is needed to serve large files, therefore you'll have to compile a custom firmware for the ESP8266.\
